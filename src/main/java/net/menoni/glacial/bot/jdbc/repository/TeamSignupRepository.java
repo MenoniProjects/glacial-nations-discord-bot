@@ -72,22 +72,4 @@ public class TeamSignupRepository extends AbstractTypeRepository<JdbcTeamSignup>
 		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup");
 	}
 
-	public List<JdbcTeamSignup> getSignupsForTeam(Long teamId) {
-		return this.queryMany("SELECT id, team_id, discord_name, trackmania_name, trackmania_uuid, team_lead FROM team_signup WHERE team_id = ?", teamId);
-	}
-
-	public Long getTeamIdForDiscordName(String discordName) {
-		return this.queryOneOfPrimitive("SELECT team_id FROM team_signup WHERE discord_name = ?", Long.class, discordName);
-	}
-
-	public Long getTeamIdForTrackmaniaName(String trackmaniaName) {
-		return this.queryOneOfPrimitive("SELECT team_id FROM team_signup WHERE trackmania_name = ?", Long.class, trackmaniaName);
-	}
-
-	public Long getTeamIdForTrackmaniaUuid(String trackmaniaUuid) {
-		return this.queryOneOfPrimitive("SELECT team_id FROM team_signup WHERE trackmania_uuid = ?", Long.class, trackmaniaUuid);
-	}
-
-	public record TeamSignupEntry(String discordName, String trackmaniaName, String trackmaniaUuid) { }
-
 }

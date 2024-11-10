@@ -98,13 +98,6 @@ public class DiscordBot {
         return this.config.getForceUpdateCommands();
     }
 
-    public Member getMemberById(String id) {
-        if (id == null) {
-            return null;
-        }
-        return applyGuild(g -> g.getMemberById(id), null);
-    }
-
     public Role getRoleById(String id) {
         if (id == null) {
             return null;
@@ -171,14 +164,6 @@ public class DiscordBot {
         autowireCapableBeanFactory.getBean(TeamService.class).ensurePlayerRoles(discordMember, botMember, memberRole, playerRole, teamLeadRole);
     }
 
-    public boolean isCorrectGuild(String guildId) {
-        if (this.config.getGuildId() == null) {
-            logger.warn("Guild id not configured");
-            return false;
-        }
-        return this.config.getGuildId().equals(guildId);
-    }
-
     public void withGuild(Consumer<Guild> consumer) {
         Guild guild = this.jda.getGuildById(this.config.getGuildId());
         if (guild != null) {
@@ -190,19 +175,6 @@ public class DiscordBot {
         Guild guild = this.jda.getGuildById(this.config.getGuildId());
         if (guild != null) {
             return function.apply(guild);
-        }
-        return fallback;
-    }
-
-    public void withJda(Consumer<JDA> consumer) {
-        if (this.jda != null) {
-            consumer.accept(this.jda);
-        }
-    }
-
-    public <T> T applyJda(Function<JDA, T> function, T fallback) {
-        if (this.jda != null) {
-            return function.apply(jda);
         }
         return fallback;
     }

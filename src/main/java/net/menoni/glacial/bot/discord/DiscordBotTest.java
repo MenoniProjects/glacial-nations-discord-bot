@@ -1,6 +1,5 @@
 package net.menoni.glacial.bot.discord;
 
-import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.menoni.spring.commons.util.LoggerTextFormat;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
@@ -24,15 +23,6 @@ public class DiscordBotTest extends DiscordBot {
 		return fallback;
 	}
 
-	@Override
-	public void withJda(Consumer<JDA> consumer) {
-
-	}
-
-	@Override
-	public <T> T applyJda(Function<JDA, T> function, T fallback) {
-		return fallback;
-	}
 
 	@Override
 	public void addEventListener(Object... objects) {
