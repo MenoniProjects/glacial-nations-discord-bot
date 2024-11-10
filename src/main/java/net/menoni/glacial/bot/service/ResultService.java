@@ -78,7 +78,9 @@ public class ResultService implements EventListener {
 	}
 
 	private void setMatchNameTitle(EmbedBuilder embed, BracketType bracket, int round) {
-		if (bracket.isPrimary() && round == 0) {
+		if (round == 99) {
+			embed.setTitle("Grand Final", sheetService.getSheetUrl(GSheetTab.PLAY_INS, GSheetFormat.PUBLIC));
+		} else if (bracket.isPrimary() && round == 0) {
 			embed.setTitle("Play-ins Match", sheetService.getSheetUrl(GSheetTab.PLAY_INS, GSheetFormat.PUBLIC));
 		} else {
 			embed.setTitle("%s Bracket - Round #%d".formatted(bracket.getDisplayName(), round), sheetService.getSheetUrl(bracket.isPrimary() ? GSheetTab.BRACKET_PRIMARY : GSheetTab.BRACKET_SECONDARY, GSheetFormat.PUBLIC));
