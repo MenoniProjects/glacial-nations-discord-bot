@@ -1,4 +1,4 @@
-glacial:
+jda:
   bot:
     startup-test: false
     version: '@project.version@'

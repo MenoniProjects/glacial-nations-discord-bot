@@ -5,30 +5,35 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>net.menoni</groupId>
-  <artifactId>glacial-discord-bot</artifactId>
-  <version>1.10.0</version>
+  <artifactId>glacial-nations-discord-bot</artifactId>
+  <version>${build.number}</version>
 
-  <name>glacial-discord-bot</name>
+  <name>glacial-nations-discord-bot</name>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.2.4</version>
+    <version>3.4.4</version>
   </parent>
 
   <properties>
+    <build.number>b2</build.number>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
     <java.version>17</java.version>
+    <!-- dependency versions -->
+    <menoni.ws.discord>1.0.0-SNAPSHOT</menoni.ws.discord>
+    <guava.version>33.4.6-jre</guava.version>
+    <junit.version>4.13.2</junit.version>
   </properties>
 
   <dependencies>
     <!-- menoni -->
     <dependency>
       <groupId>net.menoni</groupId>
-      <artifactId>menoni-spring-commons</artifactId>
-      <version>1.4.0</version>
+      <artifactId>menoni-ws-discord</artifactId>
+      <version>${menoni.ws.discord}</version>
     </dependency>
     <!-- spring -->
     <dependency>
@@ -54,32 +59,18 @@
       <optional>true</optional>
     </dependency>
 
-    <!-- discord -->
-    <dependency>
-      <groupId>net.dv8tion</groupId>
-      <artifactId>JDA</artifactId>
-      <version>5.0.1</version>
-    </dependency>
-
     <!-- caching -->
     <dependency>
       <groupId>com.google.guava</groupId>
       <artifactId>guava</artifactId>
-      <version>33.0.0-jre</version>
-    </dependency>
-
-    <!-- csv -->
-    <dependency>
-      <groupId>com.opencsv</groupId>
-      <artifactId>opencsv</artifactId>
-      <version>5.9</version>
+      <version>${guava.version}</version>
     </dependency>
 
     <!-- testing -->
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>4.13.1</version>
+      <version>${junit.version}</version>
       <scope>test</scope>
     </dependency>
 
@@ -127,6 +118,24 @@
             </exclude>
           </excludes>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>3.3.0</version>
+        <executions>
+          <execution>
+            <id>increment build number</id>
+            <phase>package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+            <configuration>
+              <executable>bash</executable>
+              <commandlineArgs>increment_build_number.sh</commandlineArgs>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
