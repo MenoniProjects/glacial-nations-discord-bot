@@ -79,7 +79,7 @@ public class StartRoundCommand implements ChatCommand {
 					roundNum,
 					String.join("\n", matchesForRoundResult)
 			));
-		} catch (IOException | CsvException e) {
+		} catch (Exception e) {
 			reply(channel, alias, "Reading GNC sheet failed: " + e.getMessage());
 			log.error("Failed reading GNC sheet", e);
 		}

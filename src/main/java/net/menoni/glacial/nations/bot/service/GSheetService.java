@@ -8,11 +8,14 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.menoni.glacial.nations.bot.discord.DiscordBot;
+import net.menoni.glacial.nations.bot.jdbc.model.JdbcTeam;
+import net.menoni.glacial.nations.bot.menoni.model.GncMember;
 import net.menoni.glacial.nations.bot.service.model.GSheetFormat;
 import net.menoni.glacial.nations.bot.service.model.GSheetTab;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.ApplicationContext;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Service;
@@ -24,6 +27,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,9 +43,13 @@ public class GSheetService {
 			.build();
 
 	@Autowired
-	private MatchChannelService matchChannelService;
+	private MemberService memberService;
 	@Autowired
 	private DiscordBot bot;
+	@Autowired
+	private TeamService teamService;
+	@Autowired
+	private ApplicationContext applicationContext;
 
 	// key part of edit url
 	@Value("${glacial.sheet.key:''}")
@@ -115,7 +123,7 @@ public class GSheetService {
 		return result;
 	}
 
-	public List<String> createMatchChannelsForRound(boolean primary, int round) throws IOException, CsvException {
+	public List<String> createMatchChannelsForRound(boolean primary, int round) throws Exception {
 		List<String> resultText = new ArrayList<>();
 		List<String[]> sheetContent = getGncSheet(primary ? GSheetTab.BRACKET_PRIMARY : GSheetTab.BRACKET_SECONDARY);
 		if (sheetContent == null || sheetContent.size() < 5) {
@@ -144,6 +152,18 @@ public class GSheetService {
 		}
 		Map<String, Role> nameMappedRoles = roles.stream().collect(Collectors.toMap(Role::getName, r -> r));
 
+		List<GncMember> captains = memberService.getAll(this.bot.getGuildId());
+		captains.removeIf(m -> {
+			if (m.getTeamMember() == null) {
+				return true;
+			}
+			return !m.getTeamMember().getCaptain();
+		});
+
+		List<JdbcTeam> teams = teamService.getAllTeams();
+
+		MatchChannelService matchChannelService = applicationContext.getBean(MatchChannelService.class);
+
 		// start at 4th row
 		int matchNum = 1;
 		for (int i = 3; i < sheetContent.size(); i+=2) {
@@ -152,8 +172,6 @@ public class GSheetService {
 			}
 			String firstTeamName = sheetContent.get(i)[roundColumnIndex];
 			String secondTeamName = sheetContent.get(i+1)[roundColumnIndex];
-
-
 
 			if (firstTeamName.isBlank() || secondTeamName.isBlank()) {
 				resultText.add("Missing team in match #%d".formatted(matchNum));
@@ -165,7 +183,20 @@ public class GSheetService {
 				} else if (secondTeamRole == null) {
 					resultText.add("Could not find team role for team %s in match #%d".formatted(secondTeamName, matchNum));
 				} else {
-					CompletableFuture<TextChannel> channelFuture = matchChannelService.createMatchChannel(primary, round, firstTeamRole, secondTeamRole);
+					JdbcTeam team1 = teams.stream().filter(t -> Objects.equals(t.getDiscordRoleId(), firstTeamRole.getId())).findAny().orElse(null);
+					JdbcTeam team2 = teams.stream().filter(t -> Objects.equals(t.getDiscordRoleId(), secondTeamRole.getId())).findAny().orElse(null);
+					if (team1 == null || team2 == null) {
+						resultText.add("Failed to find team for match #%d".formatted(matchNum));
+						continue;
+					}
+					GncMember captain1 = captains.stream().filter(c -> Objects.equals(c.getTeamMember().getTeamId(), team1.getId())).findAny().orElse(null);
+					GncMember captain2 = captains.stream().filter(c -> Objects.equals(c.getTeamMember().getTeamId(), team2.getId())).findAny().orElse(null);
+					if (captain1 == null || captain2 == null) {
+						resultText.add("Failed to find captain for team in match #%d".formatted(matchNum));
+						continue;
+					}
+
+					CompletableFuture<TextChannel> channelFuture = matchChannelService.createMatchChannel(primary, round, firstTeamRole, secondTeamRole, captain1.getMenoniMember().getEffectiveName(), captain2.getMenoniMember().getEffectiveName());
 					try {
 						TextChannel textChannel = channelFuture.get(10L, TimeUnit.SECONDS);
 						resultText.add("Match #%d: (%s vs %s) -> <#%s>".formatted(matchNum, firstTeamName, secondTeamName, textChannel.getId()));

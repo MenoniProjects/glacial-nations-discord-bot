@@ -14,12 +14,12 @@ import java.util.Map;
 public class TeamMemberRepository extends AbstractTypeRepository<JdbcTeamMember> {
 
     public List<JdbcTeamMember> getMembersByTeam(Long teamId) {
-        return this.queryMany("SELECT discord_id, team_id FROM team_member WHERE team_id = ?", teamId);
+        return this.queryMany("SELECT discord_id, team_id, captain FROM team_member WHERE team_id = ?", teamId);
     }
 
     public JdbcTeamMember getById(String discordId) {
         return this.queryOne(
-                "SELECT discord_id, team_id FROM team_member WHERE discord_id = ?",
+                "SELECT discord_id, team_id, captain FROM team_member WHERE discord_id = ?",
                 discordId
         );
     }
@@ -33,10 +33,11 @@ public class TeamMemberRepository extends AbstractTypeRepository<JdbcTeamMember>
 
     public JdbcTeamMember saveMember(JdbcTeamMember member) {
         this.update(
-                "INSERT INTO team_member (discord_id, team_id) VALUES (:discordId, :teamId) ON DUPLICATE KEY UPDATE team_id = :teamId",
+                "INSERT INTO team_member (discord_id, team_id, captain) VALUES (:discordId, :teamId, :captain) ON DUPLICATE KEY UPDATE team_id = :teamId, captain = :captain",
                 Map.of(
                         "discordId", member.getDiscordId(),
-                        "teamId", member.getTeamId()
+                        "teamId", member.getTeamId(),
+                        "captain", member.getCaptain()
                 )
         );
         return member;
@@ -44,7 +45,12 @@ public class TeamMemberRepository extends AbstractTypeRepository<JdbcTeamMember>
 
     public List<JdbcTeamMember> listMembers() {
         return this.queryMany(
-                "SELECT discord_id, team_id FROM team_member"
+                "SELECT discord_id, team_id, captain FROM team_member"
         );
     }
+
+    public JdbcTeamMember getTeamCaptain(Long teamId) {
+        return this.queryOne("SELECT discord_id, team_id, captain FROM team_member WHERE team_id = ? AND captain = true LIMIT 1", teamId);
+    }
+
 }

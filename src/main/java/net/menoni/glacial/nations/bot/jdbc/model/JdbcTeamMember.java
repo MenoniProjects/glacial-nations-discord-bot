@@ -13,5 +13,6 @@ public class JdbcTeamMember {
 
     private String discordId;
     private Long teamId;
+    private Boolean captain;
 
 }

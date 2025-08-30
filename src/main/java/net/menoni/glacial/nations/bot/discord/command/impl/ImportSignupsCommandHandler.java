@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.menoni.glacial.nations.bot.config.FeatureFlags;
 import net.menoni.glacial.nations.bot.discord.DiscordBot;
 import net.menoni.glacial.nations.bot.service.TeamService;
 import net.menoni.jda.commons.discord.command.CommandHandler;
@@ -50,6 +51,10 @@ public class ImportSignupsCommandHandler extends CommandHandler<DiscordBot> {
 
     @Override
     public void handle(Guild guild, MessageChannelUnion channel, Member member, SlashCommandInteractionEvent event) {
+        if (!FeatureFlags.UPDATE_PLAYERS) {
+            replyPrivate(event, "Player updating disabled");
+            return;
+        }
         OptionMapping csvOption = event.getOption("csv");
         if (csvOption == null) {
             replyPrivate(event, "Missing CSV");

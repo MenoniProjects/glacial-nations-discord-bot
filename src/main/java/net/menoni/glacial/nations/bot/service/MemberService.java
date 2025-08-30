@@ -6,6 +6,7 @@ import net.menoni.glacial.nations.bot.jdbc.repository.TeamMemberRepository;
 import net.menoni.glacial.nations.bot.menoni.model.GncMember;
 import net.menoni.ws.client.MenoniWsClient;
 import net.menoni.ws.common.model.discord.WsDiscordMember;
+import net.menoni.ws.discord.service.base.AbstractServerMemberService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,40 +16,33 @@ import java.util.Objects;
 
 @Slf4j
 @Service
-public class MemberService {
+public class MemberService extends AbstractServerMemberService<GncMember> {
 
-	@Autowired
-	private MenoniWsClient ws;
 	@Autowired
 	private TeamMemberRepository teamMemberRepository;
 
-	public GncMember get(String guildId, String userId) {
-		try {
-			WsDiscordMember discordMember = this.ws.getDiscordDomain().getMemberService().getMemberById(guildId, userId);
-			if (discordMember == null) {
-				return null;
-			}
-			JdbcTeamMember teamMember = this.teamMemberRepository.getById(userId);
-			return new GncMember(discordMember, teamMember);
-		} catch (Exception e) {
-			log.warn("Failed to load member: {}/{}", guildId, userId);
-			return null;
-		}
+	@Override
+	protected GncMember _loadData(WsDiscordMember member) throws Exception {
+		JdbcTeamMember teamMember = this.teamMemberRepository.getById(member.getUser().getId());
+		return new GncMember(member, teamMember);
 	}
 
-	public List<GncMember> listMembers(String guildId) {
-		try {
-			List<WsDiscordMember> guildMembers = this.ws.getDiscordDomain().getMemberService().getGuildMembers(guildId);
-			List<JdbcTeamMember> teamMembers = this.teamMemberRepository.listMembers();
-			List<GncMember> res = new ArrayList<>();
-			for (WsDiscordMember guildMember : guildMembers) {
-				JdbcTeamMember teamMember = teamMembers.stream().filter(tm -> Objects.equals(tm.getDiscordId(), guildMember.getUser().getId())).findAny().orElse(null);
-				res.add(new GncMember(guildMember, teamMember));
-			}
-			return res;
-		} catch (Exception e) {
-			log.warn("Failed to load members: {}", guildId);
-			return null;
+	@Override
+	protected List<GncMember> _loadData(List<WsDiscordMember> member) throws Exception {
+		List<JdbcTeamMember> teamMembers = this.teamMemberRepository.listMembers();
+		return new ArrayList<>(member.stream().map(m -> {
+			JdbcTeamMember teamMember = teamMembers.stream().filter(tm -> Objects.equals(tm.getDiscordId(), m.getUser().getId())).findAny().orElse(null);
+			return new GncMember(m, teamMember);
+		}).toList());
+	}
+
+	@Override
+	protected void _saveData(GncMember serverMember) throws Exception {
+		JdbcTeamMember teamMember = serverMember.getTeamMember();
+		if (teamMember != null) {
+			this.teamMemberRepository.saveMember(teamMember);
+		} else {
+			this.teamMemberRepository.deleteMember(serverMember.getMenoniMember().getUser().getId());
 		}
 	}
 
@@ -60,4 +54,11 @@ public class MemberService {
 		this.teamMemberRepository.saveMember(teamMember);
 	}
 
+	public GncMember getTeamCaptain(String guildId, Long teamId) throws Exception {
+		JdbcTeamMember captain = teamMemberRepository.getTeamCaptain(teamId);
+		if (captain == null) {
+			return null;
+		}
+		return this.get(guildId, captain.getDiscordId(), false);
+	}
 }

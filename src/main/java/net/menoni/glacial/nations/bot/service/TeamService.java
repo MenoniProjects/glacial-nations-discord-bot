@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.menoni.glacial.nations.bot.config.FeatureFlags;
 import net.menoni.glacial.nations.bot.discord.DiscordBot;
 import net.menoni.glacial.nations.bot.discord.command.impl.ImportSignupsCommandHandler;
 import net.menoni.glacial.nations.bot.jdbc.model.JdbcTeam;
@@ -65,6 +66,9 @@ public class TeamService {
 	}
 
 	public JdbcTeam getTeamById(Long id) {
+		if (id == null) {
+			return null;
+		}
 		return teamRepository.getById(id);
 	}
 
@@ -73,6 +77,9 @@ public class TeamService {
 	}
 
 	public void updateTeamsMessage() {
+		if (!FeatureFlags.UPDATE_TEAMS_MESSAGE) {
+			return;
+		}
 		TextChannel teamsChannel = bot.getTeamsChannel();
 		if (teamsChannel == null) {
 			return;
@@ -157,23 +164,30 @@ public class TeamService {
 				if (member.getUser().isSystem() || member.getUser().isBot()) {
 					continue;
 				}
-				GncMember botMember = memberService.get(member.getGuild().getId(), member.getId());
-				if (botMember == null) { // bots etc
+				GncMember loadBotMember = null;
+				try {
+					loadBotMember = memberService.get(member.getGuild().getId(), member.getId(), false);
+				} catch (Exception e) {
+					log.error("Failed to fetch bot-member: ", e);
+				}
+				if (loadBotMember == null) { // bots etc
 					continue;
 				}
+
+				GncMember botMember = loadBotMember;
 
 				DiscordRoleUtil.RoleUpdateAction updater = DiscordRoleUtil.updater(member);
 
 				JdbcTeamSignup signup = allSignups.stream()
 						.filter(Objects::nonNull)
-						.filter(s -> Objects.equals(s.getDiscordName().toLowerCase(), botMember.getMember().getUser().getUsername().toLowerCase()))
+						.filter(s -> Objects.equals(s.getDiscordName().toLowerCase(), botMember.getMenoniMember().getUser().getUsername().toLowerCase()))
 						.findAny()
 						.orElse(null);
 				boolean update = false;
 				JdbcTeamMember teamMember = botMember.getTeamMember();
 				if (signup != null) {
 					if (teamMember == null || !Objects.equals(teamMember.getTeamId(), signup.getTeamId())) {
-						teamMember = new JdbcTeamMember(member.getId(), signup.getTeamId());
+						teamMember = new JdbcTeamMember(member.getId(), signup.getTeamId(), signup.isTeamLead());
 						update = true;
 					}
 					updater.conditional(playerRole, true);
@@ -354,6 +368,9 @@ public class TeamService {
 	}
 
 	public void ensurePlayerRoles(Member discordMember, GncMember botMember, Role memberRole, Role playerRole, Role teamLeadRole) {
+		if (!FeatureFlags.UPDATE_PLAYERS) {
+			return;
+		}
 		DiscordRoleUtil.RoleUpdateAction updater = DiscordRoleUtil.updater(discordMember);
 		if (memberRole != null) {
 			updater.conditional(memberRole, true);

@@ -6,17 +6,16 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.unions.GuildMessageChannelUnion;
 import net.menoni.glacial.nations.bot.discord.command.ChatCommandSupport;
 import net.menoni.glacial.nations.bot.jdbc.model.JdbcMatch;
-import net.menoni.glacial.nations.bot.jdbc.model.JdbcTeam;
 import net.menoni.glacial.nations.bot.service.MatchService;
 import net.menoni.glacial.nations.bot.service.ResultService;
-import net.menoni.glacial.nations.bot.service.TeamService;
 import net.menoni.glacial.nations.bot.util.BracketType;
-import net.menoni.glacial.nations.bot.util.DiscordArgUtil;
+import net.menoni.glacial.nations.bot.util.GNCUtil;
 import net.menoni.jda.commons.discord.chatcommand.ChatCommand;
 import org.springframework.context.ApplicationContext;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 public class ForceWinCommand implements ChatCommand {
 	@Override
@@ -48,8 +47,8 @@ public class ForceWinCommand implements ChatCommand {
 
 		boolean primaryBracket = true;
 		String roundNumberArg = args[0];
-		String winTeamArg = args[1];
-		String loseTeamArg = args[2];
+		String winArg = args[1];
+		String loseArg = args[2];
 
 		String roundNumArgFirstCharacter = roundNumberArg.substring(0, 1);
 		roundNumberArg = roundNumberArg.substring(1);
@@ -68,42 +67,47 @@ public class ForceWinCommand implements ChatCommand {
 			reply(channel, alias, "Invalid round number argument, first argument needs to be a (positive) round number");
 			return true;
 		}
-		if (!DiscordArgUtil.isRole(winTeamArg)) {
-			reply(channel, alias, "Second argument needs to be a team @");
-			return true;
-		}
-		if (!DiscordArgUtil.isRole(loseTeamArg)) {
-			reply(channel, alias, "Third argument needs to be a team @");
+
+		GNCUtil.TeamAndCaptain tacWin;
+		GNCUtil.TeamAndCaptain tacLose;
+
+		try {
+			tacWin = GNCUtil.resolveTeamAndCaptain(applicationContext, winArg);
+			tacLose = GNCUtil.resolveTeamAndCaptain(applicationContext, loseArg);
+		} catch (Exception e) {
+			reply(channel, alias, "Failed to resolve team or captain argument:\n```\n%s\n```".formatted(e.getMessage()));
 			return true;
 		}
 
-		String winRoleId = DiscordArgUtil.getRoleId(winTeamArg);
-		String loseRoleId = DiscordArgUtil.getRoleId(loseTeamArg);
-
-		TeamService teamService = applicationContext.getBean(TeamService.class);
-		JdbcTeam winTeam = teamService.getTeamByRoleId(winRoleId);
-		JdbcTeam loseTeam = teamService.getTeamByRoleId(loseRoleId);
-
-		if (winTeam == null) {
-			reply(channel, alias, "Team not found for win-team argument");
+		if (tacWin == null) {
+			reply(channel, alias, "Failed to find win team/captain");
 			return true;
 		}
-		if (loseTeam == null) {
-			reply(channel, alias, "Team not found for lose-team argument");
+		if (tacLose == null) {
+			reply(channel, alias, "Failed to find lose team/captain");
 			return true;
 		}
 
 		MatchService matchService = applicationContext.getBean(MatchService.class);
-		JdbcMatch match = matchService.getMatchExact(primaryBracket, roundNumber, winTeam.getId(), loseTeam.getId());
+		JdbcMatch match = matchService.getMatchExact(primaryBracket, roundNumber, tacWin.captain().getMenoniMember().getUser().getId(), tacLose.captain().getMenoniMember().getUser().getId());
 
+		boolean anyResult = false;
 		if (match != null) {
-			match.setWinTeamId(winTeam.getId());
-			matchService.updateMatch(match);
+			int winIndex = Objects.equals(tacWin.captain().getMenoniMember().getUser().getId(), match.getFirstCaptainId()) ? 1 : 2;
+			matchService.setMatchWinner(match, winIndex);
+			reply(channel, alias, "Applying match winner");
+			anyResult = true;
 		}
 
-		ResultService resultService = applicationContext.getBean(ResultService.class);
-		resultService.sendResultsMessage(primaryBracket, roundNumber, winTeam, loseTeam);
-		reply(channel, alias, "Sending result message");
+		if (tacWin.team() != null && tacLose.team() != null) {
+			ResultService resultService = applicationContext.getBean(ResultService.class);
+			resultService.sendResultsMessage(primaryBracket, roundNumber, tacWin.team(), tacLose.team());
+			reply(channel, alias, "Sending result message");
+			anyResult = true;
+		}
+		if (!anyResult) {
+			reply(channel, alias, "Match not found and no teams found to send result message for");
+		}
 		return true;
 	}
 

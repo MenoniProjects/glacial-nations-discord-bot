@@ -6,9 +6,11 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.PropertySource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableConfigurationProperties
+@EnableScheduling
 @ConfigurationPropertiesScan(basePackages = {
         "net.menoni.ws.discord",
         "net.menoni.glacial.nations.bot",

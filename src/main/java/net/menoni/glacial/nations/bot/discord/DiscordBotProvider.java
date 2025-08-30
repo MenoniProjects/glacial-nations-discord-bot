@@ -75,14 +75,15 @@ public class DiscordBotProvider {
 						new NadeoPlayerCommand(ChatCommandSupport.REQUIRE_BOT_CHANNEL_AND_MASTER_ADMIN),
 						new TmxCommand(ChatCommandSupport.REQUIRE_BOT_CHANNEL_AND_MASTER_ADMIN),
 						// gnc commands
+						new DebugCommand(),
 						new EventsExportCommand(),
 						new ForceWinCommand(),
 						new MatchChannelCommand(),
 						new MissingPlayersCommand(),
 						new RefreshTeamsCommand(),
 						new StartRoundCommand(),
-						new VerifyCommand(),
-						new WinCommand()
+						new VerifyCommand()
+//						new WinCommand()
 				)
 		);
 	}

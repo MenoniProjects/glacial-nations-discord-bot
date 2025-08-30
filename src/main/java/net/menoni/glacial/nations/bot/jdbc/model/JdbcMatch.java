@@ -16,7 +16,10 @@ public class JdbcMatch {
 	private Integer roundNumber;
 	private Long firstTeamId;
 	private Long secondTeamId;
+	private String firstCaptainId;
+	private String secondCaptainId;
 	private String matchChannelId;
-	private Long winTeamId; // nullable
+	private String pinnedMessageId;
+	private Integer winIndex; // nullable
 
 }

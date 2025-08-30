@@ -70,12 +70,11 @@ public class WinCommand implements ChatCommand {
 			reply(channel, alias, "Could not find your sign-up entry - <@%s>".formatted(bot.getConfig().getStaffRoleId()));
 			return true;
 		}
-		if (match.getWinTeamId() != null) {
+		if (match.getWinIndex() != null) {
 			reply(channel, alias, "This match has already been reported as complete - ask staff to override results if needed.");
 			return true;
 		}
-		match.setWinTeamId(teamLeadSignup.getTeamId());
-		matchService.updateMatch(match);
+		matchService.setMatchWinner(match, Objects.equals(teamLeadSignup.getTeamId(), match.getFirstTeamId()) ? 1 : 2);
 
 		JdbcTeam winTeam = teamService.getTeamById(teamLeadSignup.getTeamId());
 		JdbcTeam loseTeam = teamService.getTeamById(Objects.equals(teamLeadSignup.getTeamId(), match.getFirstTeamId()) ? match.getSecondTeamId() : match.getFirstTeamId());
@@ -89,9 +88,7 @@ public class WinCommand implements ChatCommand {
 						loseTeam.getName()
 				), throwable);
 				channel.sendMessage("Failed to mark match as won, contact a staff").queue();
-				return;
 			}
-			channel.delete().queue();
 		});
 		return true;
 	}

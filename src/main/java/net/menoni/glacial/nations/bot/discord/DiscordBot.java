@@ -86,15 +86,19 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 				Thread.sleep(1000L);
 				MemberService memberService = getAutowireCapableBeanFactory().getBean(MemberService.class);
 				this.withGuild(g -> g.loadMembers().onSuccess(members -> {
-					List<GncMember> botMembers = memberService.listMembers(getGuildId());
-					Role memberRole = getMemberRole();
-					Role playerRole = getPlayerRole();
-					Role teamLeadRole = getTeamLeadRole();
-					for (Member member : members) {
-						GncMember foundMember = botMembers.stream().filter(b -> Objects.equals(b.getMember().getUser().getId(), member.getId())).findAny().orElse(null);
-						if (foundMember != null) {
-							this.ensurePlayerRole(member, foundMember, memberRole, playerRole, teamLeadRole);
+					try {
+						List<GncMember> botMembers = memberService.getAll(getGuildId());
+						Role memberRole = getMemberRole();
+						Role playerRole = getPlayerRole();
+						Role teamLeadRole = getTeamLeadRole();
+						for (Member member : members) {
+							GncMember foundMember = botMembers.stream().filter(b -> Objects.equals(b.getMenoniMember().getUser().getId(), member.getId())).findAny().orElse(null);
+							if (foundMember != null) {
+								this.ensurePlayerRole(member, foundMember, memberRole, playerRole, teamLeadRole);
+							}
 						}
+					} catch (Exception e) {
+						logger.error("Error in on-ready", e);
 					}
 				}));
 			} catch (InterruptedException e) {
