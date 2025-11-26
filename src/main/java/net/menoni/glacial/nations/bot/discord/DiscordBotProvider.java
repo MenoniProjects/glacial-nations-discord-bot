@@ -31,18 +31,18 @@ public class DiscordBotProvider {
 
 	@Bean
 	@ConditionalOnProperty(value = "jda.bot.startup-test", havingValue = "false")
-	public DiscordBot discordBot(AutowireCapableBeanFactory beanFactory) throws InterruptedException {
+	public DiscordBot discordBot(ApplicationContext applicationContext) throws InterruptedException {
 		boolean testMode = false;
 		if (scriptExecutor.getScript() != null) {
 			testMode = true;
 		}
-		return new DiscordBot(this.config, beanFactory, testMode);
+		return new DiscordBot(this.config, applicationContext, testMode);
 	}
 
 	@Bean
 	@ConditionalOnProperty(value = "jda.bot.startup-test", havingValue = "true")
-	public DiscordBot discordBotOffline(AutowireCapableBeanFactory beanFactory) throws InterruptedException {
-		return new DiscordBot(this.config, beanFactory, true);
+	public DiscordBot discordBotOffline(ApplicationContext applicationContext) throws InterruptedException {
+		return new DiscordBot(this.config, applicationContext, true);
 	}
 
 	@Bean

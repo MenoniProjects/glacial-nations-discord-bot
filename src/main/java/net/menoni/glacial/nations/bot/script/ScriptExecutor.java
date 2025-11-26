@@ -16,6 +16,8 @@ public class ScriptExecutor {
 
 	@Autowired private ApplicationContext applicationContext;
 
+//	@Autowired private cleanup_01_UnTeam unTeam;
+
 	@PostConstruct
 	public void init() {
 		script = null;

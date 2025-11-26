@@ -13,7 +13,7 @@ import net.menoni.glacial.nations.bot.service.TeamService;
 import net.menoni.jda.commons.discord.AbstractDiscordBot;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.context.ApplicationContext;
 
 import java.util.List;
 import java.util.Objects;
@@ -47,13 +47,13 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 
 	public DiscordBot(
 			DiscordBotConfig config,
-			AutowireCapableBeanFactory autowireCapableBeanFactory,
+			ApplicationContext applicationContext,
 			boolean testMode
 	) throws InterruptedException {
 		super(
 				"GNC",
 				config,
-				autowireCapableBeanFactory,
+				applicationContext,
 				testMode,
 				PERMISSIONS,
 				INTENTS,
@@ -84,7 +84,7 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 		new Thread(() -> {
 			try {
 				Thread.sleep(1000L);
-				MemberService memberService = getAutowireCapableBeanFactory().getBean(MemberService.class);
+				MemberService memberService = getApplicationContext().getBean(MemberService.class);
 				this.withGuild(g -> g.loadMembers().onSuccess(members -> {
 					try {
 						List<GncMember> botMembers = memberService.getAll(getGuildId());
@@ -108,7 +108,7 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 	}
 
 	public void ensurePlayerRole(Member discordMember, GncMember botMember, Role memberRole, Role playerRole, Role teamLeadRole) {
-		getAutowireCapableBeanFactory().getBean(TeamService.class).ensurePlayerRoles(discordMember, botMember, memberRole, playerRole, teamLeadRole);
+		getApplicationContext().getBean(TeamService.class).ensurePlayerRoles(discordMember, botMember, memberRole, playerRole, teamLeadRole);
 	}
 
 	public void logAdminChannel(String text, Object... args) {
