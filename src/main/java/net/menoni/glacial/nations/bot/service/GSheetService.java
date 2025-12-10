@@ -173,15 +173,19 @@ public class GSheetService {
 			String firstTeamName = sheetContent.get(i)[roundColumnIndex];
 			String secondTeamName = sheetContent.get(i+1)[roundColumnIndex];
 
-			if (firstTeamName.isBlank() || secondTeamName.isBlank()) {
+			if (firstTeamName.isBlank() && secondTeamName.isBlank()) {
+				resultText.add("Missing both team names in match #%d".formatted(matchNum));
+			} else if (firstTeamName.isBlank() || secondTeamName.isBlank()) {
 				resultText.add("Missing team in match #%d".formatted(matchNum));
 			} else {
 				Role firstTeamRole = nameMappedRoles.get(firstTeamName);
 				Role secondTeamRole = nameMappedRoles.get(secondTeamName);
-				if (firstTeamRole == null) {
-					resultText.add("Could not find team role for team %s in match #%d".formatted(firstTeamName, matchNum));
+				if (firstTeamRole == null && secondTeamRole == null) {
+					resultText.add("Could not find both team roles for team '%s' and team '%s' in match #%d".formatted(firstTeamName, secondTeamName, matchNum));
+				} else if (firstTeamRole == null) {
+					resultText.add("Could not find team role for team '%s' in match #%d".formatted(firstTeamName, matchNum));
 				} else if (secondTeamRole == null) {
-					resultText.add("Could not find team role for team %s in match #%d".formatted(secondTeamName, matchNum));
+					resultText.add("Could not find team role for team '%s' in match #%d".formatted(secondTeamName, matchNum));
 				} else {
 					JdbcTeam team1 = teams.stream().filter(t -> Objects.equals(t.getDiscordRoleId(), firstTeamRole.getId())).findAny().orElse(null);
 					JdbcTeam team2 = teams.stream().filter(t -> Objects.equals(t.getDiscordRoleId(), secondTeamRole.getId())).findAny().orElse(null);

@@ -74,7 +74,7 @@ public class StartRoundCommand implements ChatCommand {
 		GSheetService sheetService = applicationContext.getBean(GSheetService.class);
 		try {
 			List<String> matchesForRoundResult = sheetService.createMatchChannelsForRound(primaryBracket, roundNum);
-			reply(channel, alias, "%s - round %d\n%s".formatted(
+			replyLong(channel, alias, "%s - round %d\n%s".formatted(
 					primaryBracket ? "primary" : "secondary",
 					roundNum,
 					String.join("\n", matchesForRoundResult)
