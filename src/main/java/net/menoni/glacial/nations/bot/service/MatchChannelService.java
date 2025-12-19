@@ -19,13 +19,13 @@ import net.menoni.glacial.nations.bot.config.Constants;
 import net.menoni.glacial.nations.bot.discord.DiscordBot;
 import net.menoni.glacial.nations.bot.discord.emote.StandardEmoji;
 import net.menoni.glacial.nations.bot.event.MatchCompletedEvent;
-import net.menoni.glacial.nations.bot.event.PickBanCompletedEvent;
 import net.menoni.glacial.nations.bot.jdbc.model.JdbcMatch;
 import net.menoni.glacial.nations.bot.jdbc.model.JdbcMatchMap;
 import net.menoni.glacial.nations.bot.jdbc.model.JdbcTeam;
 import net.menoni.glacial.nations.bot.menoni.model.GncMember;
 import net.menoni.glacial.nations.bot.util.BracketType;
 import net.menoni.jda.commons.util.JDAUtil;
+import net.menoni.ws.discord.event.PickBanCompletedEvent;
 import net.menoni.ws.discord.service.PickBanService;
 import net.menoni.ws.discord.service.support.*;
 import org.jetbrains.annotations.NotNull;
@@ -224,9 +224,9 @@ public class MatchChannelService extends ListenerAdapter {
 	public PickBanOrder constructPickBanOrder(PickBanUser pbu1, PickBanUser pbu2) {
 		return PickBanOrder.builder(pbu1, pbu2)
 				.maps(
-						new PickBanMap("map1", "GNC2 - French map"),
-						new PickBanMap("map2", "GNC2 - German map"),
-						new PickBanMap("map3", "GNC2 - Dutch map")
+						new PickBanMap("map1", "Green map (XLRB)"),
+						new PickBanMap("map2", "Blue map (Thounej)"),
+						new PickBanMap("map3", "Red map (Doogie)")
 				)
 				.player1(PickBanType.PICK)
 				.player2(PickBanType.PICK)
@@ -238,6 +238,7 @@ public class MatchChannelService extends ListenerAdapter {
 	public void onPickBanComplete(PickBanCompletedEvent event) {
 		String identifier = event.session().getIdentifier();
 		if (!identifier.startsWith("m-")) {
+			log.warn("invalid match identified (no m-)");
 			return;
 		}
 		identifier = identifier.substring(2);
@@ -246,10 +247,12 @@ public class MatchChannelService extends ListenerAdapter {
 			Long id = Long.parseLong(identifier);
 			m = this.matchService.getMatchById(id);
 		} catch (NumberFormatException e) {
+			log.warn("failed to parse number from {}", identifier);
 			return;
 		}
 
 		if (m == null) {
+			log.warn("match not found by id: {}", identifier);
 			return;
 		}
 
@@ -266,6 +269,7 @@ public class MatchChannelService extends ListenerAdapter {
 					r.pickedBy()
 			));
 		}
+		log.info("Updating match maps");
 		this.matchMapService.setMatchMaps(m.getId(), matchMaps);
 		this.updatePinnedMessage(m);
 	}

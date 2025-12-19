@@ -200,7 +200,7 @@ public class GSheetService {
 						continue;
 					}
 
-					CompletableFuture<TextChannel> channelFuture = matchChannelService.createMatchChannel(primary, round, firstTeamRole, secondTeamRole, captain1.getMenoniMember().getEffectiveName(), captain2.getMenoniMember().getEffectiveName());
+					CompletableFuture<TextChannel> channelFuture = matchChannelService.createMatchChannel(primary, round, firstTeamRole, secondTeamRole, captain1.getMenoniMember().getUser().getId(), captain2.getMenoniMember().getUser().getId());
 					try {
 						TextChannel textChannel = channelFuture.get(10L, TimeUnit.SECONDS);
 						resultText.add("Match #%d: (%s vs %s) -> <#%s>".formatted(matchNum, firstTeamName, secondTeamName, textChannel.getId()));
