@@ -224,9 +224,9 @@ public class MatchChannelService extends ListenerAdapter {
 	public PickBanOrder constructPickBanOrder(PickBanUser pbu1, PickBanUser pbu2) {
 		return PickBanOrder.builder(pbu1, pbu2)
 				.maps(
-						new PickBanMap("map1", "Green map (XLRB)"),
-						new PickBanMap("map2", "Blue map (Thounej)"),
-						new PickBanMap("map3", "Red map (Doogie)")
+						PickBanMap.of("map1", "Green map (XLRB)"),
+						PickBanMap.of("map2", "Blue map (Thounej)"),
+						PickBanMap.of("map3", "Red map (Doogie)")
 				)
 				.player1(PickBanType.PICK)
 				.player2(PickBanType.PICK)
@@ -264,7 +264,7 @@ public class MatchChannelService extends ListenerAdapter {
 					m.getId(),
 					i,
 					r.map().id(),
-					r.map().name(),
+					r.map().namePlain(),
 					MatchMapType.fromPick(r.type()),
 					r.pickedBy()
 			));

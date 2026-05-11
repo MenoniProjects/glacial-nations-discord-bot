@@ -1,16 +1,11 @@
 package net.menoni.glacial.nations.bot.util;
 
-import java.util.regex.Pattern;
+import net.dv8tion.jda.api.utils.MarkdownSanitizer;
 
 public class DiscordFormattingUtil {
 
-	private static final String UNDERSCORE = Pattern.quote("_");
-	private static final String ASTERISK = Pattern.quote("*");
-
 	public static String escapeFormatting(String input) {
-		input = input.replaceAll(UNDERSCORE, "\\\\_");
-		input = input.replaceAll(ASTERISK, "\\\\*");
-		return input;
+		return MarkdownSanitizer.escape(input);
 	}
 
 }
