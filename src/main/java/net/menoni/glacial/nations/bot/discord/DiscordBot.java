@@ -30,13 +30,16 @@ public class DiscordBot extends AbstractDiscordBot<DiscordBotConfig> {
 	private static final List<GatewayIntent> INTENTS = List.of(
 			GatewayIntent.GUILD_MEMBERS,
 			GatewayIntent.GUILD_MESSAGES,
-			GatewayIntent.MESSAGE_CONTENT
+			GatewayIntent.MESSAGE_CONTENT,
+			GatewayIntent.GUILD_EXPRESSIONS,
+			GatewayIntent.GUILD_MODERATION
 	);
 
-	private static final List<CacheFlag> ENABLED_CACHES = List.of();
+	private static final List<CacheFlag> ENABLED_CACHES = List.of(
+			CacheFlag.EMOJI
+	);
 	private static final List<CacheFlag> DISABLED_CACHES = List.of(
 			CacheFlag.VOICE_STATE,
-			CacheFlag.EMOJI,
 			CacheFlag.STICKER,
 			CacheFlag.CLIENT_STATUS,
 			CacheFlag.SCHEDULED_EVENTS,
